@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Recruit AI — Candidate Dashboard</title>
+  <meta name="description" content="AI-powered recruiting dashboard to search, filter, compare, and evaluate job candidates." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="navbar__brand">
+      <span class="navbar__logo" aria-hidden="true">✦</span>
+      <span class="navbar__title">Smart Recruit AI</span>
+    </div>
+
+    <div class="navbar__search">
+      <input type="search" id="search-input" placeholder="Search candidates by name…" aria-label="Search candidates by name" />
+    </div>
+
+    <button class="navbar__theme-toggle" id="theme-toggle" type="button" aria-label="Toggle dark mode">☀️</button>
+  </header>
+
+  <main class="dashboard">
+
+    <!-- Statistics Cards -->
+    <section class="stats-grid" aria-label="Dashboard statistics">
+      <div class="stat-card">
+        <span class="stat-card__label">Total Candidates</span>
+        <span class="stat-card__value" id="stat-total">–</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card__label">Best Matches</span>
+        <span class="stat-card__value" id="stat-best-matches">–</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card__label">Unique Job Roles</span>
+        <span class="stat-card__value" id="stat-roles">–</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card__label">Average Candidate Age</span>
+        <span class="stat-card__value" id="stat-avg-age">–</span>
+      </div>
+    </section>
+
+    <div class="dashboard__body">
+
+      <!-- Filter Panel -->
+      <aside class="filter-panel" id="filter-panel" aria-label="Filter candidates">
+        <!-- Populated by components/filters.js -->
+      </aside>
+
+      <!-- Candidate Grid -->
+      <section class="results" aria-label="Candidate results">
+        <div class="results__header">
+          <h2>Candidates</h2>
+          <span id="results-count" class="results__count"></span>
+        </div>
+
+        <div id="loading-state" class="state-message" hidden>
+          <span class="spinner"></span>
+          <p>Loading candidates…</p>
+        </div>
+
+        <div id="data-error-state" class="state-message state-message--error" hidden>
+          <p><strong>Couldn't load candidate data.</strong></p>
+          <p id="data-error-message"></p>
+        </div>
+
+        <div id="empty-state" class="state-message" hidden>
+          <p class="state-message__icon" aria-hidden="true">🔍</p>
+          <p>No candidates match your filters.</p>
+        </div>
+
+        <div class="candidate-grid" id="candidate-grid"></div>
+
+        <div class="pagination" id="pagination"></div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Profile Modal -->
+  <div class="modal-overlay" id="modal-overlay" hidden>
+    <div class="modal" id="profile-modal" role="dialog" aria-modal="true" aria-label="Candidate profile"></div>
+  </div>
+
+  <!-- PapaParse for CSV parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
