@@ -25,6 +25,7 @@ init();
 
 async function init() {
   initTheme();
+  initFilterToggle();
   showLoadingState();
 
   try {
@@ -122,4 +123,17 @@ function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   const toggle = document.getElementById('theme-toggle');
   if (toggle) toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+}
+
+/* ---------------- Collapsible filter panel (mobile/tablet) ---------------- */
+
+function initFilterToggle() {
+  const toggleBtn = document.getElementById('filter-toggle');
+  const panel = document.getElementById('filter-panel');
+  if (!toggleBtn || !panel) return;
+
+  toggleBtn.addEventListener('click', () => {
+    const isOpen = panel.classList.toggle('is-open');
+    toggleBtn.setAttribute('aria-expanded', String(isOpen));
+  });
 }
