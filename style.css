@@ -64,6 +64,16 @@
 
 * { box-sizing: border-box; }
 
+/* Some of our own classes set a `display` value with the same CSS
+   specificity as the browser's built-in `[hidden] { display: none }`
+   rule, and load later in the cascade — which silently overrides the
+   `hidden` HTML attribute and leaves elements visible (and clickable/
+   on top of everything) when they should be invisible and inert. This
+   rule guarantees `hidden` always wins, no matter what other CSS says. */
+[hidden] {
+  display: none !important;
+}
+
 html, body {
   margin: 0;
   padding: 0;
