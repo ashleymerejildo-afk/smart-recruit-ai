@@ -14,84 +14,123 @@
 </head>
 <body>
 
-  <!-- Top Navigation -->
-  <header class="navbar">
-    <div class="navbar__brand">
-      <span class="navbar__logo" aria-hidden="true">✦</span>
-      <span class="navbar__title">Smart Recruit AI</span>
+  <div class="app-shell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <span class="navbar__logo" aria-hidden="true">✦</span>
+        <span class="navbar__title">Smart Recruit AI</span>
+      </div>
+
+      <nav class="sidebar__nav" aria-label="Primary">
+        <a href="#top" class="sidebar__link is-active" data-nav="dashboard">
+          <span class="sidebar__icon" aria-hidden="true">⌂</span> Dashboard
+        </a>
+        <a href="#candidates-section" class="sidebar__link" data-nav="candidates">
+          <span class="sidebar__icon" aria-hidden="true">☰</span> Candidates
+        </a>
+        <a href="#filters-section" class="sidebar__link" data-nav="filters">
+          <span class="sidebar__icon" aria-hidden="true">▤</span> Filters
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main column -->
+    <div class="main-shell">
+
+      <header class="topbar" id="top">
+        <div class="topbar__search">
+          <input type="search" id="search-input" placeholder="Search candidates by name, role, or skill…" aria-label="Search candidates by name, role, or skill" />
+        </div>
+        <button class="navbar__theme-toggle" id="theme-toggle" type="button" aria-label="Toggle dark mode">☀️</button>
+      </header>
+
+      <main class="dashboard">
+
+        <div class="dashboard__intro">
+          <h1>Candidate Dashboard</h1>
+          <p>Here's what's happening with your recruitment pipeline.</p>
+        </div>
+
+        <!-- Statistics Cards -->
+        <section class="stats-grid" aria-label="Dashboard statistics">
+          <div class="stat-card">
+            <span class="stat-card__icon stat-card__icon--blue" aria-hidden="true">👥</span>
+            <span class="stat-card__label">Total Candidates</span>
+            <span class="stat-card__value" id="stat-total">–</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__icon stat-card__icon--purple" aria-hidden="true">🏆</span>
+            <span class="stat-card__label">Best Matches</span>
+            <span class="stat-card__value" id="stat-best-matches">–</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__icon stat-card__icon--teal" aria-hidden="true">💼</span>
+            <span class="stat-card__label">Unique Job Roles</span>
+            <span class="stat-card__value" id="stat-roles">–</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__icon stat-card__icon--gold" aria-hidden="true">🎂</span>
+            <span class="stat-card__label">Average Candidate Age</span>
+            <span class="stat-card__value" id="stat-avg-age">–</span>
+          </div>
+        </section>
+
+        <div class="dashboard__body">
+
+          <!-- Filter Panel -->
+          <div class="filter-panel-wrapper" id="filters-section">
+            <button class="filter-toggle-btn" id="filter-toggle" type="button" aria-expanded="false" aria-controls="filter-panel">
+              <span>Filters</span>
+              <span class="filter-toggle-btn__chevron" aria-hidden="true">▾</span>
+            </button>
+            <aside class="filter-panel" id="filter-panel" aria-label="Filter candidates">
+              <!-- Populated by components/filters.js -->
+            </aside>
+          </div>
+
+          <!-- Candidate List -->
+          <section class="results" id="candidates-section" aria-label="Candidate results">
+            <div class="results__header">
+              <h2>Candidates</h2>
+              <span id="results-count" class="results__count"></span>
+            </div>
+
+            <div id="loading-state" class="state-message" hidden>
+              <span class="spinner"></span>
+              <p>Loading candidates…</p>
+            </div>
+
+            <div id="data-error-state" class="state-message state-message--error" hidden>
+              <p><strong>Couldn't load candidate data.</strong></p>
+              <p id="data-error-message"></p>
+            </div>
+
+            <div id="empty-state" class="state-message" hidden>
+              <p class="state-message__icon" aria-hidden="true">🔍</p>
+              <p>No candidates match your filters.</p>
+            </div>
+
+            <div class="candidate-grid" id="candidate-grid"></div>
+
+            <div class="pagination" id="pagination"></div>
+          </section>
+
+        </div>
+
+        <!-- Insight banner: real numbers derived from the loaded data, not an AI call -->
+        <div class="insight-banner" id="insight-banner" hidden>
+          <span class="insight-banner__icon" aria-hidden="true">✨</span>
+          <div class="insight-banner__text">
+            <strong>Insight</strong>
+            <p id="insight-text"></p>
+          </div>
+        </div>
+
+      </main>
     </div>
-
-    <div class="navbar__search">
-      <input type="search" id="search-input" placeholder="Search candidates by name…" aria-label="Search candidates by name" />
-    </div>
-
-    <button class="navbar__theme-toggle" id="theme-toggle" type="button" aria-label="Toggle dark mode">☀️</button>
-  </header>
-
-  <main class="dashboard">
-
-    <!-- Statistics Cards -->
-    <section class="stats-grid" aria-label="Dashboard statistics">
-      <div class="stat-card">
-        <span class="stat-card__label">Total Candidates</span>
-        <span class="stat-card__value" id="stat-total">–</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-card__label">Best Matches</span>
-        <span class="stat-card__value" id="stat-best-matches">–</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-card__label">Unique Job Roles</span>
-        <span class="stat-card__value" id="stat-roles">–</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-card__label">Average Candidate Age</span>
-        <span class="stat-card__value" id="stat-avg-age">–</span>
-      </div>
-    </section>
-
-    <div class="dashboard__body">
-
-      <!-- Filter Panel -->
-      <div class="filter-panel-wrapper">
-        <button class="filter-toggle-btn" id="filter-toggle" type="button" aria-expanded="false" aria-controls="filter-panel">
-          <span>Filtros</span>
-          <span class="filter-toggle-btn__chevron" aria-hidden="true">▾</span>
-        </button>
-        <aside class="filter-panel" id="filter-panel" aria-label="Filter candidates">
-          <!-- Populated by components/filters.js -->
-        </aside>
-      </div>
-
-      <!-- Candidate Grid -->
-      <section class="results" aria-label="Candidate results">
-        <div class="results__header">
-          <h2>Candidates</h2>
-          <span id="results-count" class="results__count"></span>
-        </div>
-
-        <div id="loading-state" class="state-message" hidden>
-          <span class="spinner"></span>
-          <p>Loading candidates…</p>
-        </div>
-
-        <div id="data-error-state" class="state-message state-message--error" hidden>
-          <p><strong>Couldn't load candidate data.</strong></p>
-          <p id="data-error-message"></p>
-        </div>
-
-        <div id="empty-state" class="state-message" hidden>
-          <p class="state-message__icon" aria-hidden="true">🔍</p>
-          <p>No candidates match your filters.</p>
-        </div>
-
-        <div class="candidate-grid" id="candidate-grid"></div>
-
-        <div class="pagination" id="pagination"></div>
-      </section>
-
-    </div>
-  </main>
+  </div>
 
   <!-- Profile Modal -->
   <div class="modal-overlay" id="modal-overlay" hidden>

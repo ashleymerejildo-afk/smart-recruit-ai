@@ -32,7 +32,12 @@ export function applyFiltersAndSort(applicants, state) {
 
   if (state.searchTerm) {
     const term = state.searchTerm.trim().toLowerCase();
-    result = result.filter((a) => a.name.toLowerCase().includes(term));
+    result = result.filter((a) => {
+      const inName = a.name.toLowerCase().includes(term);
+      const inRole = a.jobRole.toLowerCase().includes(term);
+      const inSkills = (a.skills || []).some((s) => s.toLowerCase().includes(term));
+      return inName || inRole || inSkills;
+    });
   }
 
   if (state.jobRole && state.jobRole !== 'all') {

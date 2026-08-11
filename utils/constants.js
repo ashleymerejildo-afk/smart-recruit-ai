@@ -8,7 +8,10 @@
 export const CSV_PATH = 'data/applicants.csv';
 
 // How many candidate cards to render per page in the grid.
-export const PAGE_SIZE = 12;
+export const PAGE_SIZE = 20;
+
+// Options offered in the "X per page" selector.
+export const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
 // Fields that are deliberately NOT exposed as filter/search criteria.
 // Age, Gender, Race and Ethnicity are shown on a candidate's profile for

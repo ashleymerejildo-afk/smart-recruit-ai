@@ -5,7 +5,7 @@
  */
 
 import { CSV_PATH } from './constants.js';
-import { toInt } from './helpers.js';
+import { toInt, extractSkills } from './helpers.js';
 
 const REQUIRED_COLUMNS = [
   'Job Applicant Name',
@@ -35,6 +35,8 @@ export function loadApplicants() {
       download: true,
       header: true,
       skipEmptyLines: true,
+      worker: true, // parses off the main thread — this file can be ~10k rows, and without
+                     // this the browser tab can visibly freeze for a moment on first load
       complete: (results) => {
         try {
           validate(results);
@@ -93,6 +95,7 @@ function normalizeRow(row, index) {
     race: (row['Race'] || 'Not specified').trim(),
     ethnicity: (row['Ethnicity'] || 'Not specified').trim(),
     resume: (row['Resume'] || 'No resume summary available.').trim(),
+    skills: extractSkills(row['Resume'] || ''),
     jobRole,
     jobDescription: (row['Job Description'] || 'No job description available.').trim(),
     bestMatch: toInt(row['Best Match'], 0),

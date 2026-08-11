@@ -1,139 +1,193 @@
 /**
  * script.js
- * Application entry point. Loads the CSV, wires up search/filters/sort,
- * renders the stats bar and candidate grid, and manages dark-mode + modal
- * state. Imported as an ES module from index.html.
+ * Application entry point. Loads the candidate CSV, then wires together
+ * the filter panel, search box, candidate list, profile modal, mobile
+ * filter drawer, dark/light theme toggle, and the insight banner.
  */
 
 import { loadApplicants } from './utils/csvLoader.js';
-import { computeStats } from './utils/helpers.js';
 import { applyFiltersAndSort } from './utils/filters.js';
-import { THEME_STORAGE_KEY } from './utils/constants.js';
-import { initSearch } from './components/search.js';
+import { computeStats } from './utils/helpers.js';
+import { THEME_STORAGE_KEY, PAGE_SIZE } from './utils/constants.js';
 import { renderFilterPanel } from './components/filters.js';
 import { renderCandidateGrid } from './components/cards.js';
+import { initSearch } from './components/search.js';
 import { openProfileModal } from './components/modal.js';
 
-const appState = {
-  allApplicants: [],
-  filterState: { jobRole: 'all', bestMatch: 'all', sortBy: 'name-asc', minAge: 0, maxAge: 100 },
+let allApplicants = [];
+let currentPage = 1;
+let pageSize = PAGE_SIZE;
+let filterState = {
   searchTerm: '',
-  currentPage: 1,
+  jobRole: 'all',
+  bestMatch: 'all',
+  sortBy: 'name-asc',
+  minAge: 0,
+  maxAge: 200,
 };
 
+const loadingState = document.getElementById('loading-state');
+const errorState = document.getElementById('data-error-state');
+const errorMessage = document.getElementById('data-error-message');
+const resultsCount = document.getElementById('results-count');
+
+initTheme();
+initFilterDrawer();
 init();
 
+/* ----------------------------------------------------------------------
+   Bootstrapping
+---------------------------------------------------------------------- */
+
 async function init() {
-  initTheme();
-  initFilterToggle();
-  showLoadingState();
+  setLoading(true);
 
   try {
-    const applicants = await loadApplicants();
-    appState.allApplicants = applicants;
+    allApplicants = await loadApplicants();
+    setLoading(false);
 
-    hideLoadingState();
-    renderStats(applicants);
-    renderFilterPanel(applicants, handleFilterChange);
+    renderStats(allApplicants);
+    renderFilterPanel(allApplicants, handleFilterChange); // triggers the first list render
+    renderInsight(allApplicants);
     initSearch(handleSearch);
-    renderResults();
+    initThemeToggle();
   } catch (err) {
-    showErrorState(err.message);
+    setLoading(false);
+    if (errorState) errorState.hidden = false;
+    if (errorMessage) {
+      errorMessage.textContent = err?.message || 'Please check your connection and try refreshing the page.';
+    }
   }
 }
 
-function handleFilterChange(filterState, options = {}) {
-  appState.filterState = filterState;
-  if (options.clearSearch) appState.searchTerm = '';
-  appState.currentPage = 1;
-  renderResults();
+function setLoading(isLoading) {
+  if (loadingState) loadingState.hidden = !isLoading;
+  if (errorState) errorState.hidden = true;
+}
+
+/* ----------------------------------------------------------------------
+   Filtering, sorting, search, pagination
+---------------------------------------------------------------------- */
+
+function handleFilterChange(state, opts = {}) {
+  filterState = {
+    ...filterState,
+    ...state,
+    searchTerm: opts.clearSearch ? '' : filterState.searchTerm,
+  };
+  currentPage = 1;
+  applyAndRender();
 }
 
 function handleSearch(term) {
-  appState.searchTerm = term;
-  appState.currentPage = 1;
-  renderResults();
+  filterState = { ...filterState, searchTerm: term };
+  currentPage = 1;
+  applyAndRender();
 }
 
 function handlePageChange(page) {
-  appState.currentPage = page;
-  renderResults();
-  document.getElementById('candidate-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  currentPage = page;
+  applyAndRender();
+  document.getElementById('candidates-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function renderResults() {
-  const combinedState = { ...appState.filterState, searchTerm: appState.searchTerm };
-  const results = applyFiltersAndSort(appState.allApplicants, combinedState);
-  renderCandidateGrid(results, appState.currentPage, openProfileModal, handlePageChange);
-  updateResultsCount(results.length);
+function handlePageSizeChange(newSize) {
+  pageSize = newSize;
+  currentPage = 1;
+  applyAndRender();
 }
 
-function updateResultsCount(count) {
-  const el = document.getElementById('results-count');
-  if (el) el.textContent = `${count.toLocaleString()} candidate${count === 1 ? '' : 's'}`;
+function applyAndRender() {
+  const filtered = applyFiltersAndSort(allApplicants, filterState);
+
+  if (resultsCount) {
+    resultsCount.textContent = `${filtered.length.toLocaleString()} of ${allApplicants.length.toLocaleString()}`;
+  }
+
+  renderCandidateGrid(filtered, currentPage, pageSize, openProfileModal, handlePageChange, handlePageSizeChange);
 }
+
+/* ----------------------------------------------------------------------
+   Stats cards
+---------------------------------------------------------------------- */
 
 function renderStats(applicants) {
   const { total, bestMatches, uniqueRoles, avgAge } = computeStats(applicants);
-  setStatValue('stat-total', total.toLocaleString());
-  setStatValue('stat-best-matches', bestMatches.toLocaleString());
-  setStatValue('stat-roles', uniqueRoles.toLocaleString());
-  setStatValue('stat-avg-age', avgAge);
+  setText('stat-total', total.toLocaleString());
+  setText('stat-best-matches', bestMatches.toLocaleString());
+  setText('stat-roles', uniqueRoles.toLocaleString());
+  setText('stat-avg-age', avgAge);
 }
 
-function setStatValue(id, value) {
+function setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value;
 }
 
-function showLoadingState() {
-  const el = document.getElementById('loading-state');
-  if (el) el.hidden = false;
+/* ----------------------------------------------------------------------
+   Insight banner — a real number derived from the loaded data
+   (not an AI call, so it costs nothing and is always accurate)
+---------------------------------------------------------------------- */
+
+function renderInsight(applicants) {
+  const banner = document.getElementById('insight-banner');
+  const text = document.getElementById('insight-text');
+  if (!banner || !text) return;
+
+  const bestMatches = applicants.filter((a) => a.bestMatch === 1);
+  const rolesWithBestMatch = new Set(bestMatches.map((a) => a.jobRole)).size;
+
+  if (bestMatches.length === 0 || rolesWithBestMatch === 0) {
+    banner.hidden = true;
+    return;
+  }
+
+  text.textContent = `You have ${bestMatches.length.toLocaleString()} candidates marked as a Best Match across ${rolesWithBestMatch} job role${rolesWithBestMatch === 1 ? '' : 's'}.`;
+  banner.hidden = false;
 }
 
-function hideLoadingState() {
-  const el = document.getElementById('loading-state');
-  if (el) el.hidden = true;
+/* ----------------------------------------------------------------------
+   Mobile filter drawer (the "Filters" toggle button under 1024px)
+---------------------------------------------------------------------- */
+
+function initFilterDrawer() {
+  const toggle = document.getElementById('filter-toggle');
+  const panel = document.getElementById('filter-panel');
+  if (!toggle || !panel) return;
+
+  toggle.addEventListener('click', () => {
+    const isOpen = panel.classList.toggle('is-open');
+    toggle.setAttribute('aria-expanded', String(isOpen));
+  });
 }
 
-function showErrorState(message) {
-  hideLoadingState();
-  const el = document.getElementById('data-error-state');
-  if (!el) return;
-  el.hidden = false;
-  el.querySelector('#data-error-message').textContent = message;
-}
-
-/* ---------------- Dark mode toggle ---------------- */
+/* ----------------------------------------------------------------------
+   Theme toggle (persisted in localStorage)
+---------------------------------------------------------------------- */
 
 function initTheme() {
-  const stored = localStorage.getItem(THEME_STORAGE_KEY) || 'dark';
-  applyTheme(stored);
-
-  const toggle = document.getElementById('theme-toggle');
-  toggle?.addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme') || 'dark';
-    const next = current === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
-    localStorage.setItem(THEME_STORAGE_KEY, next);
-  });
-}
-
-function applyTheme(theme) {
+  const saved = localStorage.getItem(THEME_STORAGE_KEY);
+  const theme = saved === 'light' || saved === 'dark' ? saved : 'dark';
   document.documentElement.setAttribute('data-theme', theme);
-  const toggle = document.getElementById('theme-toggle');
-  if (toggle) toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
 }
 
-/* ---------------- Collapsible filter panel (mobile/tablet) ---------------- */
+function initThemeToggle() {
+  const toggle = document.getElementById('theme-toggle');
+  if (!toggle) return;
 
-function initFilterToggle() {
-  const toggleBtn = document.getElementById('filter-toggle');
-  const panel = document.getElementById('filter-panel');
-  if (!toggleBtn || !panel) return;
+  syncThemeIcon(toggle);
 
-  toggleBtn.addEventListener('click', () => {
-    const isOpen = panel.classList.toggle('is-open');
-    toggleBtn.setAttribute('aria-expanded', String(isOpen));
+  toggle.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem(THEME_STORAGE_KEY, next);
+    syncThemeIcon(toggle);
   });
+}
+
+function syncThemeIcon(toggle) {
+  const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  toggle.textContent = current === 'dark' ? '☀️' : '🌙';
+  toggle.setAttribute('aria-label', current === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
 }

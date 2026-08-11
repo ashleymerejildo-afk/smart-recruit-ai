@@ -4,50 +4,33 @@
  * Promise<string> with the model's response text, and throws a descriptive
  * Error on failure so the UI can show a message + retry button.
  *
- * ⚠️ SECURITY NOTE
- * This project is a static site (GitHub Pages, no backend). Any API key
- * placed in AI_API_KEY below ships in plain text to every visitor's
- * browser and can be read from "View Source" or the Network tab in
- * seconds — there is no way to hide a client-side key. That's fine for a
- * local demo you run yourself, but it is NOT safe for a public deployment.
- *
- * For production, put your key behind a small server-side proxy (e.g. a
- * Cloudflare Worker, Vercel Edge Function, or AWS Lambda) that forwards
- * requests to the AI API and injects the key there. Point AI_API_URL at
- * that proxy instead, and never commit a real key to this file.
+ * This calls OpenAI through /api/ai, a Vercel Serverless Function (see
+ * /api/ai.js) that holds the real OpenAI API key server-side, as the
+ * OPENAI_API_KEY environment variable in your Vercel project settings.
+ * No key, provider URL, or model name is ever sent to the browser.
  */
 
-const AI_API_URL = 'https://api.your-ai-provider.com/v1/chat/completions'; // TODO: replace with your endpoint (or proxy URL)
-const AI_API_KEY = 'YOUR_API_KEY'; // TODO: never commit a real key here — see note above
-const AI_MODEL = 'YOUR_MODEL_NAME'; // TODO: e.g. 'gpt-4o-mini', 'claude-sonnet-4-6', etc.
+const AI_API_URL = '/api/ai';
 
 const MAX_RETRIES = 2;
 
 /**
- * Low-level call to the AI API. Swap the body/headers below to match
- * whichever provider you use — this shape works for most OpenAI-compatible
- * chat completion endpoints.
+ * Low-level call to our own /api/ai proxy, which forwards to OpenAI.
  */
 async function callAI(prompt) {
   const response = await fetch(AI_API_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${AI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: AI_MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 600,
-    }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt }),
   });
 
+  const data = await response.json().catch(() => ({}));
+
   if (!response.ok) {
-    throw new Error(`AI API responded with status ${response.status}.`);
+    throw new Error(data.error || `AI API responded with status ${response.status}.`);
   }
 
-  const data = await response.json();
-  const text = data?.choices?.[0]?.message?.content ?? data?.content?.[0]?.text;
+  const text = data?.text;
 
   if (!text) {
     throw new Error('The AI API returned an unexpected response format.');

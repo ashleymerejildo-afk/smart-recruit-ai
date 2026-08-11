@@ -58,6 +58,16 @@ export function openProfileModal(applicant) {
         </dl>
       </section>
 
+      ${(applicant.skills && applicant.skills.length)
+        ? `<section class="modal__section">
+             <h3>Skills</h3>
+             <div class="skill-tag-list">
+               ${applicant.skills.map((s) => `<span class="skill-tag">${escapeHtml(s)}</span>`).join('')}
+             </div>
+           </section>`
+        : ''}
+      </section>
+
       <section class="modal__section">
         <h3>Resume</h3>
         <p class="modal__text">${escapeHtml(applicant.resume)}</p>
@@ -81,10 +91,15 @@ export function openProfileModal(applicant) {
   overlay.hidden = false;
   document.body.classList.add('modal-open');
 
-  document.getElementById('modal-close').addEventListener('click', closeProfileModal);
+  const closeBtn = document.getElementById('modal-close');
+  closeBtn.addEventListener('click', closeProfileModal);
+  closeBtn.focus();
+
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) closeProfileModal();
   });
+
+  document.addEventListener('keydown', handleEscapeKey);
 
   modal.querySelectorAll('[data-ai-action]').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -100,6 +115,11 @@ export function closeProfileModal() {
   if (!overlay) return;
   overlay.hidden = true;
   document.body.classList.remove('modal-open');
+  document.removeEventListener('keydown', handleEscapeKey);
+}
+
+function handleEscapeKey(e) {
+  if (e.key === 'Escape') closeProfileModal();
 }
 
 async function runAIAction(action, applicant) {

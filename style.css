@@ -181,6 +181,132 @@ input, select {
 }
 
 /* ==========================================================================
+   App shell — sidebar + topbar (new layout)
+   ========================================================================== */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  padding: var(--space-5) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  padding: 0 var(--space-2);
+}
+
+.sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.sidebar__link:hover {
+  background: var(--card-elevated);
+  color: var(--text-primary);
+}
+
+.sidebar__link.is-active {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white;
+}
+
+.sidebar__icon {
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.main-shell {
+  flex: 1;
+  min-width: 0;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar__search {
+  flex: 1;
+  max-width: 480px;
+}
+
+.topbar__search input {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.topbar__search input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.dashboard__intro {
+  margin-bottom: var(--space-5);
+}
+
+.dashboard__intro h1 {
+  font-size: 1.5rem;
+}
+
+.dashboard__intro p {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  margin-top: var(--space-1);
+}
+
+@media (max-width: 1024px) {
+  .sidebar { display: none; }
+}
+
+/* ==========================================================================
    Dashboard layout
    ========================================================================== */
 
@@ -213,6 +339,22 @@ input, select {
   transform: translateY(-3px);
   box-shadow: var(--shadow-lift);
 }
+
+.stat-card__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  margin-bottom: var(--space-1);
+}
+
+.stat-card__icon--blue { background: color-mix(in srgb, var(--primary) 22%, transparent); }
+.stat-card__icon--purple { background: color-mix(in srgb, #A855F7 22%, transparent); }
+.stat-card__icon--teal { background: color-mix(in srgb, var(--success) 22%, transparent); }
+.stat-card__icon--gold { background: color-mix(in srgb, var(--warning) 22%, transparent); }
 
 .stat-card__label {
   font-size: 0.78rem;
@@ -394,6 +536,30 @@ input, select {
 .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
 /* ==========================================================================
+   Focus visibility (keyboard navigation)
+   Only one element (the search input) had a focus style before — this
+   extends the same accent ring to every other interactive element so a
+   keyboard user can always see where they are.
+   ========================================================================== */
+
+.btn:focus-visible,
+.navbar__theme-toggle:focus-visible,
+.filter-toggle-btn:focus-visible,
+.candidate-card__name a:focus-visible,
+.modal__close:focus-visible,
+[data-view-profile]:focus-visible,
+.filter-group select:focus-visible,
+.age-slider input[type="range"]:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.candidate-card:has(button:focus-visible) {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  box-shadow: var(--shadow-lift);
+}
+
+/* ==========================================================================
    Results / grid
    ========================================================================== */
 
@@ -410,9 +576,90 @@ input, select {
 }
 
 .candidate-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.candidate-row {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: minmax(180px, 1.4fr) auto minmax(160px, 1.6fr) auto;
+  align-items: center;
   gap: var(--space-4);
+  box-shadow: var(--shadow-soft);
+  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+  animation: card-in 0.35s ease both;
+}
+
+.candidate-row:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
+.candidate-row__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.candidate-row__name {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.candidate-row__meta {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  margin-top: 2px;
+}
+
+.candidate-row__match { justify-self: start; }
+
+.candidate-row__skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.skill-tag {
+  display: inline-flex;
+  align-items: center;
+  background: var(--card-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.skill-tag--more {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.skill-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.candidate-row__action { justify-self: end; }
+
+@media (max-width: 860px) {
+  .candidate-row {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+  .candidate-row__action,
+  .candidate-row__match { justify-self: start; }
 }
 
 .candidate-card {
@@ -537,13 +784,67 @@ input, select {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
   margin-top: var(--space-6);
+  flex-wrap: wrap;
 }
 
 .pagination__label {
   font-size: 0.85rem;
   color: var(--text-secondary);
+}
+
+.pagination__arrow {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination__pages {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pagination__page {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.pagination__page:hover {
+  background: var(--card-elevated);
+  color: var(--text-primary);
+}
+
+.pagination__page.is-active {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white;
+}
+
+.pagination__ellipsis {
+  color: var(--text-muted);
+  padding: 0 4px;
+}
+
+.pagination__size {
+  margin-left: var(--space-2);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text-primary);
+  font-size: 0.82rem;
 }
 
 /* ==========================================================================
@@ -741,12 +1042,43 @@ input, select {
 }
 
 @media (max-width: 640px) {
-  .navbar { flex-wrap: wrap; padding: var(--space-3) var(--space-4); }
-  .navbar__search { order: 3; max-width: 100%; }
+  .topbar { flex-wrap: wrap; padding: var(--space-3) var(--space-4); }
   .dashboard { padding: var(--space-4); }
   .stats-grid { grid-template-columns: 1fr 1fr; gap: var(--space-3); }
   .stat-card__value { font-size: 1.6rem; }
-  .candidate-grid { grid-template-columns: 1fr; }
+  .candidate-row { padding: var(--space-4); }
   .detail-list { grid-template-columns: 1fr; }
   .modal { max-height: 92vh; }
+}
+
+/* ==========================================================================
+   Insight banner — real numbers derived from the loaded data
+   ========================================================================== */
+
+.insight-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+  padding: var(--space-5);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 14%, var(--card)), color-mix(in srgb, var(--accent) 10%, var(--card)));
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  border-radius: var(--radius-lg);
+}
+
+.insight-banner__icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.insight-banner__text strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  margin-bottom: 2px;
+}
+
+.insight-banner__text p {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
 }
