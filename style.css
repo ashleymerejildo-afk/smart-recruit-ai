@@ -619,7 +619,20 @@ input, select {
   margin-top: 2px;
 }
 
-.candidate-row__match { justify-self: start; }
+.candidate-row__match {
+  justify-self: start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.skill-score-chip {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-family: var(--font-display);
+}
 
 .candidate-row__skills {
   display: flex;
@@ -643,6 +656,12 @@ input, select {
 .skill-tag--more {
   background: transparent;
   color: var(--text-muted);
+}
+
+.skill-tag--matched {
+  background: color-mix(in srgb, var(--success) 16%, transparent);
+  border-color: color-mix(in srgb, var(--success) 40%, var(--border));
+  color: var(--success);
 }
 
 .skill-tag-list {

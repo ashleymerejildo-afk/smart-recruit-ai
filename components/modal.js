@@ -6,7 +6,7 @@
  * with a retry button on failure, and the result once it succeeds.
  */
 
-import { escapeHtml, getInitials, stringToHue } from '../utils/helpers.js';
+import { escapeHtml, getInitials, stringToHue, computeSkillMatch } from '../utils/helpers.js';
 import {
   summarizeResume,
   explainMatch,
@@ -59,12 +59,16 @@ export function openProfileModal(applicant) {
       </section>
 
       ${(applicant.skills && applicant.skills.length)
-        ? `<section class="modal__section">
-             <h3>Skills</h3>
+        ? (() => {
+            const { matchedSkills, totalSkills } = computeSkillMatch(applicant.skills, applicant.jobDescription || '');
+            const matchedSet = new Set(matchedSkills);
+            return `<section class="modal__section">
+             <h3>Skills — ${matchedSkills.length}/${totalSkills} match this role</h3>
              <div class="skill-tag-list">
-               ${applicant.skills.map((s) => `<span class="skill-tag">${escapeHtml(s)}</span>`).join('')}
+               ${applicant.skills.map((s) => `<span class="skill-tag ${matchedSet.has(s) ? 'skill-tag--matched' : ''}">${escapeHtml(s)}</span>`).join('')}
              </div>
-           </section>`
+           </section>`;
+          })()
         : ''}
       </section>
 

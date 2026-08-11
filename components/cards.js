@@ -5,7 +5,7 @@
  * can be thousands of rows, so we never render everything at once.
  */
 
-import { escapeHtml, getInitials, stringToHue } from '../utils/helpers.js';
+import { escapeHtml, getInitials, stringToHue, computeSkillMatch } from '../utils/helpers.js';
 import { PAGE_SIZE_OPTIONS } from '../utils/constants.js';
 
 export function renderCandidateGrid(applicants, page, pageSize, onViewProfile, onPageChange, onPageSizeChange) {
@@ -49,10 +49,23 @@ function rowTemplate(applicant) {
       : '<span class="badge badge-neutral">Not a Match</span>';
 
   const skills = applicant.skills || [];
-  const visibleSkills = skills.slice(0, 3);
+  const { matchedSkills, totalSkills } = computeSkillMatch(skills, applicant.jobDescription || '');
+  const matchedSet = new Set(matchedSkills);
+
+  // Show matched skills first so the highlight is actually visible within
+  // the first 3 tags, not buried after a "+N" overflow.
+  const ordered = [...skills].sort((a, b) => Number(matchedSet.has(b)) - Number(matchedSet.has(a)));
+  const visibleSkills = ordered.slice(0, 3);
   const extraCount = skills.length - visibleSkills.length;
-  const skillTags = visibleSkills.map((s) => `<span class="skill-tag">${escapeHtml(s)}</span>`).join('');
+
+  const skillTags = visibleSkills
+    .map((s) => `<span class="skill-tag ${matchedSet.has(s) ? 'skill-tag--matched' : ''}">${escapeHtml(s)}</span>`)
+    .join('');
   const extraTag = extraCount > 0 ? `<span class="skill-tag skill-tag--more">+${extraCount}</span>` : '';
+
+  const skillScoreChip = totalSkills > 0
+    ? `<span class="skill-score-chip" title="${matchedSkills.length} of ${totalSkills} extracted skills relate to this job's description">${matchedSkills.length}/${totalSkills} skills</span>`
+    : '';
 
   return `
     <article class="candidate-row" style="--avatar-hue:${hue}">
@@ -64,7 +77,7 @@ function rowTemplate(applicant) {
         </div>
       </div>
 
-      <div class="candidate-row__match">${matchBadge}</div>
+      <div class="candidate-row__match">${matchBadge}${skillScoreChip}</div>
 
       <div class="candidate-row__skills">
         ${skillTags}${extraTag}

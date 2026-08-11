@@ -10,6 +10,8 @@
  * by protected characteristics.
  */
 
+import { computeSkillMatch } from './helpers.js';
+
 export function getUniqueJobRoles(applicants) {
   return [...new Set(applicants.map((a) => a.jobRole))].sort((a, b) => a.localeCompare(b));
 }
@@ -72,7 +74,13 @@ function sortApplicants(applicants, sortBy) {
       return sorted.sort((a, b) => b.bestMatch - a.bestMatch);
     case 'match-asc':
       return sorted.sort((a, b) => a.bestMatch - b.bestMatch);
+    case 'skill-match-desc':
+      return sorted.sort((a, b) => skillMatchScore(b) - skillMatchScore(a));
     default:
       return sorted;
   }
+}
+
+function skillMatchScore(applicant) {
+  return computeSkillMatch(applicant.skills || [], applicant.jobDescription || '').score;
 }

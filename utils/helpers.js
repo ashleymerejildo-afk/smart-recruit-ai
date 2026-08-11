@@ -93,3 +93,38 @@ export function extractSkills(resume = '') {
     .map((s) => s.trim())
     .filter(Boolean);
 }
+
+const STOPWORDS = new Set(['and', 'the', 'with', 'for', 'a', 'an', 'of', 'to', 'in', 'on', 'or', 'is', 'are']);
+
+function significantWords(text = '') {
+  return (text.toLowerCase().match(/[a-z]+/g) || []).filter((w) => !STOPWORDS.has(w) && w.length > 2);
+}
+
+/** True if two words likely share a root, e.g. "Diagnosis" / "diagnose". */
+function sharesRoot(wordA, wordB, prefixLen = 6) {
+  const n = Math.min(prefixLen, wordA.length, wordB.length);
+  return wordA.slice(0, n) === wordB.slice(0, n);
+}
+
+/**
+ * Scores how many of a candidate's real extracted skills relate to a job
+ * description's wording. Uses word-root matching rather than exact-phrase
+ * matching, because resumes and job descriptions phrase the same concept
+ * differently (skill "Diagnosis" vs job description "diagnose") — verified
+ * against real rows in applicants.csv, exact-phrase matching missed most
+ * genuine matches while this produces real differentiation between
+ * candidates for the same role.
+ * Returns { matchedSkills, totalSkills, score } where score is 0-1.
+ */
+export function computeSkillMatch(skills = [], jobDescription = '') {
+  const jdWords = significantWords(jobDescription);
+  const matchedSkills = skills.filter((skill) =>
+    significantWords(skill).some((skillWord) => jdWords.some((jdWord) => sharesRoot(skillWord, jdWord)))
+  );
+
+  return {
+    matchedSkills,
+    totalSkills: skills.length,
+    score: skills.length ? matchedSkills.length / skills.length : 0,
+  };
+}

@@ -26,6 +26,7 @@ export const SORT_OPTIONS = [
   { value: 'age-desc', label: 'Age (High to Low)' },
   { value: 'match-desc', label: 'Best Match First' },
   { value: 'match-asc', label: 'Best Match Last' },
+  { value: 'skill-match-desc', label: 'Best Skill Match First' },
 ];
 
 export const THEME_STORAGE_KEY = 'smart-recruit-theme';
