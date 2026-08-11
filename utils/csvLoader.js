@@ -31,12 +31,17 @@ export function loadApplicants() {
       return;
     }
 
-    Papa.parse(CSV_PATH, {
+    // Web Workers don't reliably resolve relative URLs against the page's
+    // location — resolve to an absolute URL first so worker:true below
+    // (which offloads parsing so the tab doesn't freeze on ~10k rows)
+    // can actually fetch the file.
+    const absoluteCsvUrl = new URL(CSV_PATH, document.baseURI).href;
+
+    Papa.parse(absoluteCsvUrl, {
       download: true,
       header: true,
       skipEmptyLines: true,
-      worker: true, // parses off the main thread — this file can be ~10k rows, and without
-                     // this the browser tab can visibly freeze for a moment on first load
+      worker: true,
       complete: (results) => {
         try {
           validate(results);
